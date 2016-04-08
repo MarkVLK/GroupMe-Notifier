@@ -3,6 +3,7 @@
 This is a simple Python script that will have a GroupMe Bot post a message containing text, an image, and a location to whatever group it is attached to.
 
 At the moment, it works as such:
+
 1.  Reads from GroupMeConfig.cfg file to populate necessary variables
 2.  Asks user to input text they'd like to send in the GroupMe message
 3.  Connects to an FTP server using the user & host specified in the config file
