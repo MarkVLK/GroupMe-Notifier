@@ -1,5 +1,5 @@
 import ConfigParser
-from datetime import datetime
+#from datetime import datetime
 from ftplib import FTP_TLS
 import os
 import requests
@@ -9,29 +9,28 @@ config = ConfigParser.RawConfigParser()
 config.read('GroupMeConfig.cfg')
 
 # GroupMe Variables
-token = config.get('GroupMe', 'token')
-groupme_api_url = config.get('GroupMe', 'groupme_api_url')
-groupme_image_url = config.get('GroupMe', 'groupme_image_url')
-bot_id = config.get('GroupMe', 'bot_id')
+TOKEN = config.get('GroupMe', 'token')
+GROUPME_API_URL = config.get('GroupMe', 'groupme_api_url')
+GROUPME_IMAGE_URL = config.get('GroupMe', 'groupme_image_url')
+BOT_ID = config.get('GroupMe', 'bot_id')
 
 # FTP Variables
-host = config.get('FTP', 'host')
-user = config.get('FTP', 'user')
-passwd = config.get('FTP', 'passwd')
-image_directory = config.get('FTP', 'image_directory')
+HOST = config.get('FTP', 'host')
+USER = config.get('FTP', 'user')
+PASSWD = config.get('FTP', 'passwd')
+IMAGE_DIRECTORY = config.get('FTP', 'image_directory')
 
 # Instantiate message components
-text = ''
 data = {}
 attachments = []
 
 # Populate fields
 #data['text'] = raw_input('Enter text to place in message: ')
-data['bot_id'] = bot_id
+data['bot_id'] = BOT_ID
 
 def group_listing():
     # Get list of groups user is a member of
-    r = requests.get('%s/groups?token=%s' % (groupme_api_url, token))
+    r = requests.get('%s/groups?token=%s' % (GROUPME_API_URL, TOKEN))
     resp = r.json()
 
     print 'Groups:'
@@ -39,10 +38,10 @@ def group_listing():
         print item['name']
 
 # Securely connect to FTP server
-ftps = FTP_TLS(host, user, passwd)
+ftps = FTP_TLS(HOST, USER, PASSWD)
 ftps.prot_p()
 # Change working directory to directory containing images
-ftps.cwd(image_directory)
+ftps.cwd(IMAGE_DIRECTORY)
 # Get list of items in current directory
 directory_list = ftps.nlst()
 # Get list of images
@@ -78,7 +77,7 @@ ftps.quit()
 def upload_image(filename):
     image_file = {'file': open(filename, 'rb')}
     print 'Uploading %s to GroupMe image service...' % filename
-    r = requests.post('%s?access_token=%s' % (groupme_image_url, token), files=image_file)
+    r = requests.post('%s?access_token=%s' % (GROUPME_IMAGE_URL, TOKEN), files=image_file)
     # Get URL of image as given by GroupMe image service
     return r.json()['payload']['url']
 
@@ -99,6 +98,6 @@ for image in images_to_upload:
 
     # Post text, image, and location to group chat
     print 'POSTing message to GroupMe...'
-    r = requests.post('%s/bots/post' % groupme_api_url, json=data)
+    r = requests.post('%s/bots/post' % GROUPME_API_URL, json=data)
     # Clear attachments to avoid re-posting same content
     del attachments[:]
