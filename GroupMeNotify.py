@@ -1,8 +1,30 @@
 import ConfigParser
+from ConfigParser import NoOptionError
 #from datetime import datetime
+import dropbox
 from ftplib import FTP_TLS
 import os
 import requests
+
+def get_dropbox_access_token(app_key, app_secret):
+    # Get Dropbox authorization code from user
+    flow = dropbox.client.DropboxOAuth2FlowNoRedirect(app_key, app_secret)
+    authorize_url = flow.start()
+    print '1. Go to: ' + authorize_url
+    print '2. Click "Allow" (you might have to log in first)'
+    print '3. Copy the authorization code.'
+    code = raw_input("Enter the authorization code here: ").strip()
+    access_token, user_id = flow.finish(code)
+
+    # Store Dropbox access token in config file
+    config.set('Dropbox', 'access_token', access_token)
+    config.set('Dropbox', 'user_id', user_id)
+
+    with open('GroupMeConfig.cfg', 'wb') as configfile:
+            config.write(configfile)
+
+    # Return access token & user ID
+    return access_token, user_id
 
 # Get values from configuration file
 config = ConfigParser.RawConfigParser()
@@ -14,11 +36,30 @@ GROUPME_API_URL = config.get('GroupMe', 'groupme_api_url')
 GROUPME_IMAGE_URL = config.get('GroupMe', 'groupme_image_url')
 BOT_ID = config.get('GroupMe', 'bot_id')
 
+# Dropbox Variables
+try:
+    ACCESS_TOKEN = config.get('Dropbox', 'access_token')
+    USER_ID = config.get('Dropbox', 'user_id')
+except NoOptionError:
+    APP_KEY = config.get('Dropbox', 'app_key')
+    APP_SECRET = config.get('Dropbox', 'app_secret')
+    ACCESS_TOKEN, USER_ID = get_dropbox_access_token(APP_KEY, APP_SECRET)
+
 # FTP Variables
 HOST = config.get('FTP', 'host')
 USER = config.get('FTP', 'user')
 PASSWD = config.get('FTP', 'passwd')
 IMAGE_DIRECTORY = config.get('FTP', 'image_directory')
+
+# Access Dropbox info
+client = dropbox.client.DropboxClient(ACCESS_TOKEN)
+client_info = client.account_info()
+# Converts bytes to gigabytes
+B_to_GB_ratio = 1 / 1024.0 / 1024.0 / 1024.0
+quota = client_info['quota_info']['quota'] * B_to_GB_ratio
+used = client_info['quota_info']['normal'] * B_to_GB_ratio
+percent = used/quota*100
+print 'Using about %.2f GB / %.2f GB (%.f%%) of your Dropbox storage' % (used, quota, percent)
 
 # Instantiate message components
 data = {}
